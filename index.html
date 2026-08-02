@@ -19,38 +19,24 @@
 
         .top-header {
             width: 100%;
-            padding: 15px 25px;
+            padding: 12px 20px;
             background-color: #ffffff;
             border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
         }
 
-        .brand-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
         .brand-logo {
-            height: 40px;
+            height: 38px;
             width: auto;
             object-fit: contain;
-        }
-
-        .brand-text {
-            color: #ff0000;
-            font-size: 26px;
-            font-weight: 900;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
         }
 
         .main-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 40px 20px;
+            padding: 30px 20px;
         }
 
         .support-card {
@@ -69,9 +55,9 @@
         }
 
         .card-header h2 {
-            color: #333333;
+            color: #222222;
             font-size: 20px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .form-group {
@@ -83,7 +69,7 @@
             margin-bottom: 6px;
             color: #555555;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .form-group input, .form-group select {
@@ -93,33 +79,37 @@
             border-radius: 8px;
             font-size: 14px;
             background-color: #fafafa;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #e4181f;
         }
 
         .submit-btn {
             width: 100%;
             padding: 13px;
-            background-color: #ff0000;
+            background-color: #e4181f;
             color: #ffffff;
             border: none;
             border-radius: 8px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             margin-top: 10px;
+            transition: background-color 0.2s;
         }
 
         .submit-btn:hover {
-            background-color: #cc0000;
+            background-color: #c71218;
         }
     </style>
 </head>
 <body>
 
     <header class="top-header">
-        <div class="brand-container">
-            <img src="logo.png" alt="Garena Logo" class="brand-logo" id="garenaLogo">
-            <span class="brand-text">GARENA</span>
-        </div>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/23/Garena_logo.svg" alt="Garena" class="brand-logo">
     </header>
 
     <div class="main-container">
@@ -166,7 +156,6 @@
     </div>
 
     <script>
-        // Render-এর লাইভ লিঙ্ক আপডেট করা হয়েছে
         const RAILWAY_URL = 'https://ff-garena-13jd.onrender.com'; 
 
         document.getElementById('supportForm').addEventListener('submit', async (e) => {
