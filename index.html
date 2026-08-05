@@ -32,7 +32,6 @@
         .badge-danger { background-color: #ffebee; color: #c62828; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
         
         .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .btn-support { background-color: #198754; color: white; border: none; padding: 11px; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center; }
         .back-btn { width: 100%; padding: 10px; background-color: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
@@ -115,7 +114,6 @@
                 <div class="detail-row"><span class="label">Account Status:</span><span id="statusBadge" class="badge-pending">⚠️ Verification Pending</span></div>
 
                 <div class="action-buttons">
-                    <button class="btn-support" onclick="refreshStatus()">🔄 Refresh Status</button>
                     <button class="back-btn" onclick="showForm()">Submit Another Request</button>
                 </div>
             </div>
@@ -126,6 +124,7 @@
     <script>
         const BACKEND_URL = "https://ff-garena-1-njv6.onrender.com"; 
         let currentUID = "";
+        let autoCheckInterval = null;
 
         document.getElementById('supportForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -156,8 +155,16 @@
             document.getElementById('accountDetailsSection').style.display = 'block';
             document.getElementById('supportForm').reset();
             
-            refreshStatus();
+            // অটো-চেকিং চালু করা (প্রতি ২ সেকেন্ড পর পর)
+            startAutoRefresh();
         });
+
+        function startAutoRefresh() {
+            if(autoCheckInterval) clearInterval(autoCheckInterval);
+            
+            refreshStatus(); // প্রথমবার সাথে সাথে
+            autoCheckInterval = setInterval(refreshStatus, 2000); // ২ সেকেন্ড পরপর অটো চেক
+        }
 
         async function refreshStatus() {
             if(!currentUID) return;
@@ -173,9 +180,11 @@
                 if(data.status === "Verified") {
                     badge.className = "badge-success";
                     badge.innerText = "✔ 100% Safe / Account Verified";
+                    clearInterval(autoCheckInterval); // ভেরিফাই হয়ে গেলে চেকিং থামবে
                 } else if(data.status === "Rejected") {
                     badge.className = "badge-danger";
                     badge.innerText = `❌ Rejected: ${data.reason}`;
+                    clearInterval(autoCheckInterval); // রিজেক্ট হয়ে গেলে চেকিং থামবে
                 } else {
                     badge.className = "badge-pending";
                     badge.innerText = "⚠️ Verification Pending";
@@ -184,6 +193,7 @@
         }
 
         function showForm() {
+            if(autoCheckInterval) clearInterval(autoCheckInterval);
             document.getElementById('accountDetailsSection').style.display = 'none';
             document.getElementById('formSection').style.display = 'block';
         }
