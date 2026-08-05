@@ -169,7 +169,8 @@
         async function refreshStatus() {
             if(!currentUID) return;
             try {
-                const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}`);
+                // cache: 'no-store' যুক্ত করা হয়েছে যাতে ব্রাউজার ক্যাশ না রাখে
+                const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}`, { cache: 'no-store' });
                 const result = await res.json();
                 const data = result.data;
                 
@@ -180,11 +181,11 @@
                 if(data.status === "Verified") {
                     badge.className = "badge-success";
                     badge.innerText = "✔ 100% Safe / Account Verified";
-                    clearInterval(autoCheckInterval); // ভেরিফাই হয়ে গেলে চেকিং থামবে
+                    if(autoCheckInterval) clearInterval(autoCheckInterval); // ভেরিফাই হলে অটো-চেক থামবে
                 } else if(data.status === "Rejected") {
                     badge.className = "badge-danger";
                     badge.innerText = `❌ Rejected: ${data.reason}`;
-                    clearInterval(autoCheckInterval); // রিজেক্ট হয়ে গেলে চেকিং থামবে
+                    if(autoCheckInterval) clearInterval(autoCheckInterval); // রিজেক্ট হলে অটো-চেক থামবে
                 } else {
                     badge.className = "badge-pending";
                     badge.innerText = "⚠️ Verification Pending";
