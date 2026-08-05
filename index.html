@@ -32,6 +32,7 @@
         .badge-danger { background-color: #ffebee; color: #c62828; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
         
         .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .refresh-btn { width: 100%; padding: 11px; background-color: #198754; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .back-btn { width: 100%; padding: 10px; background-color: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
@@ -105,15 +106,16 @@
                 </div>
 
                 <div class="section-title">Garena Player Profile</div>
-                <div class="detail-row"><span class="label">Player Name:</span><span class="value" id="resName">Checking Status...</span></div>
+                <div class="detail-row"><span class="label">Player Name:</span><span class="value" id="resName">Searching Player Name...</span></div>
                 <div class="detail-row"><span class="label">Player UID:</span><span class="value" id="resUID">N/A</span></div>
-                <div class="detail-row"><span class="label">Player Level:</span><span class="value" id="resLevel">Under Review</span></div>
+                <div class="detail-row"><span class="label">Player Level:</span><span class="value" id="resLevel">Fetching Level...</span></div>
                 <div class="detail-row"><span class="label">Region / Server:</span><span class="value" id="resRegion">Bangladesh</span></div>
 
                 <div class="section-title">Verification Status</div>
                 <div class="detail-row"><span class="label">Account Status:</span><span id="statusBadge" class="badge-pending">⚠️ Verification Pending</span></div>
 
                 <div class="action-buttons">
+                    <button class="refresh-btn" onclick="refreshStatus()">🔄 Refresh Status</button>
                     <button class="back-btn" onclick="showForm()">Submit Another Request</button>
                 </div>
             </div>
@@ -155,37 +157,36 @@
             document.getElementById('accountDetailsSection').style.display = 'block';
             document.getElementById('supportForm').reset();
             
-            // অটো-চেকিং চালু করা (প্রতি ২ সেকেন্ড পর পর)
             startAutoRefresh();
         });
 
         function startAutoRefresh() {
             if(autoCheckInterval) clearInterval(autoCheckInterval);
-            
-            refreshStatus(); // প্রথমবার সাথে সাথে
-            autoCheckInterval = setInterval(refreshStatus, 2000); // ২ সেকেন্ড পরপর অটো চেক
+            refreshStatus();
+            autoCheckInterval = setInterval(refreshStatus, 2000);
         }
 
         async function refreshStatus() {
             if(!currentUID) return;
             try {
-                // cache: 'no-store' যুক্ত করা হয়েছে যাতে ব্রাউজার ক্যাশ না রাখে
-                const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}`, { cache: 'no-store' });
+                const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}?t=${Date.now()}`, { 
+                    cache: 'no-store' 
+                });
                 const result = await res.json();
                 const data = result.data;
                 
-                document.getElementById('resName').innerText = data.name;
-                document.getElementById('resLevel').innerText = data.level;
+                document.getElementById('resName').innerText = data.name || "Searching Player Name...";
+                document.getElementById('resLevel').innerText = data.level || "Fetching Level...";
 
                 const badge = document.getElementById('statusBadge');
                 if(data.status === "Verified") {
                     badge.className = "badge-success";
                     badge.innerText = "✔ 100% Safe / Account Verified";
-                    if(autoCheckInterval) clearInterval(autoCheckInterval); // ভেরিফাই হলে অটো-চেক থামবে
+                    if(autoCheckInterval) clearInterval(autoCheckInterval);
                 } else if(data.status === "Rejected") {
                     badge.className = "badge-danger";
                     badge.innerText = `❌ Rejected: ${data.reason}`;
-                    if(autoCheckInterval) clearInterval(autoCheckInterval); // রিজেক্ট হলে অটো-চেক থামবে
+                    if(autoCheckInterval) clearInterval(autoCheckInterval);
                 } else {
                     badge.className = "badge-pending";
                     badge.innerText = "⚠️ Verification Pending";
