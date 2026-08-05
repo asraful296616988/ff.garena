@@ -124,7 +124,6 @@
     </div>
 
     <script>
-        // আপনার রেন্ডার ব্যাকএন্ড লিংক কানেক্ট করা হয়েছে
         const BACKEND_URL = "https://ff-garena-1-njv6.onrender.com"; 
         let currentUID = "";
 
@@ -144,48 +143,48 @@
             document.getElementById('formSection').style.display = 'none';
             document.getElementById('loadingSection').style.display = 'block';
 
-            // ব্যাকএন্ডে টিকিটের তথ্য পাঠানো
+            // ১. ব্যাকএন্ডে সাবমিট রিকোয়েস্ট
+            fetch(`${BACKEND_URL}/api/submit-ticket`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Render submission delay:", err));
+
+            // ২. গ্যারেনা এপিআই ডাটা ফেচ (টাস্ক শেষ হলে পেজ দেখাবে)
+            let name = "Player_" + currentUID.slice(-4);
+            let level = "Level 60+";
+            let region = "Bangladesh";
+
             try {
-                await fetch(`${BACKEND_URL}/api/submit-ticket`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch (err) {
-                console.error("Submission failed:", err);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // ৩ সেকেন্ডের বেশি লাগলে ইগনোর করবে
+
+                const apiRes = await fetch(`https://ff-api-br.vercel.app/api/player-info?uid=${currentUID}`, { signal: controller.signal });
+                const apiData = await apiRes.json();
+                clearTimeout(timeoutId);
+                
+                if(apiData && apiData.nickname) {
+                    name = apiData.nickname;
+                    level = "Level " + (apiData.level || "N/A");
+                    region = apiData.region || "Bangladesh";
+                }
+            } catch(e) {
+                console.log("Garena API skipped/timed out, showing generated details.");
             }
 
-            // Garena API থেকে লাইভ ডাটা লোড করা
-            setTimeout(async () => {
-                let name = "ꪝܔȺꜱʀᴀꜰᴜʟ_ғғ";
-                let level = "Level 64";
-                let region = "Bangladesh";
+            // ৩. লোডিং বন্ধ করে ডাটা দেখানো
+            document.getElementById('resUID').innerText = currentUID;
+            document.getElementById('resName').innerText = name;
+            document.getElementById('resLevel').innerText = level;
+            document.getElementById('resRegion').innerText = region;
 
-                try {
-                    const apiRes = await fetch(`https://ff-api-br.vercel.app/api/player-info?uid=${currentUID}`);
-                    const apiData = await apiRes.json();
-                    
-                    if(apiData && apiData.nickname) {
-                        name = apiData.nickname;
-                        level = "Level " + (apiData.level || "N/A");
-                        region = apiData.region || "Bangladesh";
-                    }
-                } catch(e) {}
-
-                document.getElementById('resUID').innerText = currentUID;
-                document.getElementById('resName').innerText = name;
-                document.getElementById('resLevel').innerText = level;
-                document.getElementById('resRegion').innerText = region;
-
-                document.getElementById('loadingSection').style.display = 'none';
-                document.getElementById('accountDetailsSection').style.display = 'block';
-                document.getElementById('supportForm').reset();
-                
-                refreshStatus();
-            }, 2500);
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('accountDetailsSection').style.display = 'block';
+            document.getElementById('supportForm').reset();
+            
+            refreshStatus();
         });
 
-        // লাইভ স্ট্যাটাস চেক করার ফাংশন
         async function refreshStatus() {
             if(!currentUID) return;
             try {
