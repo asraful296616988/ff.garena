@@ -1,7 +1,7 @@
 {
   "name": "ff-garena-backend",
   "version": "1.0.0",
-  "description": "Garena Backend",
+  "description": "Garena Support Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,6 +9,6 @@
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "node-fetch": "^2.6.7"
+    "axios": "^1.6.0"
   }
 }
