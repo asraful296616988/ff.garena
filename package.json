@@ -1,6 +1,7 @@
 {
   "name": "ff-garena-backend",
   "version": "1.0.0",
+  "description": "Garena Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
